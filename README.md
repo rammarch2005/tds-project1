@@ -358,18 +358,7 @@ MIT License — see LICENSE file for details.
     lsof -ti:5000 | xargs kill -9
     ```
 
-## Submission (for course / evaluation)
-
-When your API and repository are ready, submit the required information via the provided submission form:
-
-Submission form: https://docs.google.com/forms/d/e/1FAIpQLScInfLkTCeVow9Z-4LL3TjM8NuTX90akPxryCwHhDjUm6laaw/viewform?pli=1
-
-You will be asked for:
-- Deployment API URL (e.g., `{deployed_link}/api-endpoint`)
-- The `SECRET` value your API expects
-- The GitHub repository URL (make repo public before the deadline)
-
-Before submitting, verify:
+ verify:
 - `/health` returns `{"status":"healthy"}`
 - `/api-endpoint` accepts POST requests with authentication
 - Repository visibility and environment variables are configured
@@ -391,3 +380,4 @@ If you run into issues:
 If you'd like, I can:
 - Open a pull request that applies this corrected README.md,
 - Or directly push the change to a branch and create the PR for you. Tell me which you'd prefer.
+
