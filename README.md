@@ -11,41 +11,43 @@ pinned: false
 
 # LLM Code Deployment System
 
-An automated application deployment system that receives briefs, generates apps using LLMs, deploys them to GitHub Pages, and handles iterative updates.
+An automated application deployment system that receives briefs, generates apps using LLMs, deploys them to GitHub Pages (or Spaces/Vercel), and handles iterative updates.
 
 ## Overview
 
 This project implements an automated workflow for building and deploying web applications:
 
-1. **Build Phase**: Receives a brief, generates code using OpenAI, creates a GitHub repository, and deploys to GitHub Pages
-2. **Revise Phase**: Accepts update requests, modifies existing code, and redeploys
+1. **Build Phase**: Receives a brief, generates code using an LLM, creates/updates a GitHub repository, and deploys to GitHub Pages.
+2. **Revise Phase**: Accepts update requests, modifies existing code, and redeploys.
 
 ## Features
 
-- **LLM-Powered Code Generation**: Uses OpenAI GPT-4 to generate complete web applications
-- **Automated GitHub Deployment**: Creates repositories, manages code, and enables GitHub Pages
-- **Multi-Round Support**: Handles initial build and subsequent revision requests
-- **Secret Verification**: Validates requests with a secret key
-- **Professional Documentation**: Auto-generates README files and includes MIT License
-- **Retry Logic**: Ensures evaluation API notifications with exponential backoff
+- LLM-powered code generation (Gemini / OpenAI-compatible APIs)
+- Automated GitHub repository creation and Pages deployment
+- Multi-round support (initial build + revisions)
+- Secret verification for request authentication
+- Auto-generated professional README and MIT license
+- Robust retry / exponential backoff logic for external API calls
 
 ## Setup Instructions
 
 ### 1. Prerequisites
 
 - Python 3.13+
-- [uv](https://github.com/astral-sh/uv) package manager
+- uv package manager (https://github.com/astral-sh/uv) or use pip if preferred
 - GitHub account with a Personal Access Token
-- OpenAI API key
+- OpenAI/Gemini API key (or compatible LLM provider key)
 
 ### 2. Install Dependencies
+
+All required packages are defined in `pyproject.toml`.
 
 ```bash
 # Install packages with uv
 uv sync
 ```
 
-All required packages are already defined in `pyproject.toml`.
+(If you prefer pip, use your virtualenv and `pip install -r requirements.txt` if you maintain a requirements file.)
 
 ### 3. Configure Environment Variables
 
@@ -55,33 +57,26 @@ Copy the example environment file and fill in your credentials:
 cp .env.example .env
 ```
 
-Edit `.env` and set:
+Edit `.env` and set the following:
 
-- `GITHUB_TOKEN`: Your GitHub Personal Access Token
-  - Create at: <https://github.com/settings/personal-access-tokens/new>
+- `GITHUB_TOKEN`: Your GitHub Personal Access Token  
+  - Create at: https://github.com/settings/personal-access-tokens/new  
   - Required scopes: `repo`, `workflow`, `admin:repo_hook`
 - `GITHUB_USERNAME`: Your GitHub username
-- `OPENAI_API_KEY`: Your GEMINI API key
-  - Get from: <https://aistudio.google.com/api-keys>
-  - Watch how to create one: <https://youtu.be/6BRyynZkvf0>
-- `SECRET`: Your secret key for request verification
+- `OPENAI_API_KEY`: Your OpenAI / Gemini API key (primary LLM provider key)
+- `SECRET`: Shared secret for request verification
 - `PORT`: (Optional) Server port, defaults to 5000
-- `AIPIPE_AKI_KEY`: (Optional) AI Pipe API token for fallback when Gemini API fails
-  - Generate from: <https://aipipe.org/login>
-  - Login with Google account to get your token
+- `AIPIPE_AKI_KEY`: (Optional) AI Pipe API token used as a fallback LLM provider
 
 ### 4. GitHub Personal Access Token Setup
 
-1. Go to <https://github.com/settings/tokens/new>
+1. Go to https://github.com/settings/tokens/new
 2. Give it a descriptive name (e.g., "LLM Deployment System")
 3. Select scopes:
-   - `repo` (Full control of private repositories)
+   - `repo` (Full control of repositories)
    - `workflow` (Update GitHub Action workflows)
    - `admin:repo_hook` (Manage repository webhooks)
 4. Click "Generate token" and copy it to your `.env` file
-
-![Access Token](.github/assets/access_token.png)
-![Permissions](.github/assets/permissions.png)
 
 ### 5. Verify Configuration
 
@@ -91,14 +86,7 @@ Before running the server, verify your configuration:
 uv run check_config.py
 ```
 
-This will:
-
-- Check if all required environment variables are set
-- Validate your GitHub token by authenticating
-- Validate your OpenAI API key
-- Display masked values for confirmation
-
-If any issues are found, you'll get clear instructions on how to fix them.
+This script will validate environment variables and tokens and provide guidance when something is missing.
 
 ## Usage
 
@@ -122,119 +110,49 @@ docker build -t llm-deploy:latest .
 docker run --env-file .env -p 5000:5000 llm-deploy:latest
 ```
 
-Notes:
-
-- The Docker image installs Python 3.13 and uv, copies `.env` early for better caching, and starts the app via `uv run main.py`.
-- Override the port by setting `PORT` in your `.env` and mapping it accordingly, e.g. `-p 8080:8080`.
+Override the port by setting `PORT` in your `.env` and mapping it accordingly, e.g., `-p 8080:8080`.
 
 ### Deploy to Vercel
 
-You can deploy this application to Vercel for production hosting:
+You can deploy this application to Vercel for production hosting.
 
-#### 1. Install Vercel CLI
+1. Install Vercel CLI:
 
 ```bash
-npm i vercel -g
+npm i -g vercel
 ```
 
-#### 2. Authenticate with Vercel
-
-Run the following command and follow the prompts to authenticate. Create a Vercel account if you don't have one:
+2. Authenticate:
 
 ```bash
 vercel
 ```
 
-This will:
-- Prompt you to log in or sign up
-- Link your project to Vercel
-- Set up the project configuration
-
-#### 3. Test Locally with Vercel
-
-Before deploying to production, test your app locally with Vercel's environment:
+3. Test locally:
 
 ```bash
 vercel dev
 ```
 
-This starts a local development server that mimics Vercel's production environment.
-
-#### 4. Deploy to Production
-
-Once you're ready, deploy to production:
+4. Deploy:
 
 ```bash
 vercel --prod
 ```
-## Optional
-#### 5. Configure Environment Variables
 
-After deploying, add your environment variables in the Vercel dashboard:
+After deploying, set environment variables in the Vercel dashboard.
 
-1. Go to your project settings on Vercel
-2. Navigate to "Environment Variables"
-3. Add the following variables:
-   - `GITHUB_TOKEN`
-   - `GITHUB_USERNAME`
-   - `OPENAI_API_KEY`
-   - `SECRET`
-   - `PORT` (optional)
+### Deploy to Hugging Face Spaces (Docker)
 
-Alternatively, you can add environment variables via CLI:
+Hugging Face Spaces supports Docker and is a good hosting option for a simple API.
 
-```bash
-vercel env add GITHUB_TOKEN
-vercel env add GITHUB_USERNAME
-vercel env add OPENAI_API_KEY
-vercel env add SECRET
-```
+Method 1 — Git-based deployment (recommended):
 
-#### Notes
-
-- Vercel will automatically detect the Python runtime from `requirements.txt`
-- The `vercel.json` file configures routing and build settings
-- Production URL will be provided after deployment
-- Vercel provides automatic HTTPS and CDN
-
-### Deploy to Hugging Face Spaces
-
-Hugging Face Spaces provides free hosting for ML and web applications using Docker containers.
-
-#### Method 1: Using Git (Recommended)
-
-##### Step 1: Generate Hugging Face Token
-
-1. Go to [Hugging Face Tokens](https://huggingface.co/settings/tokens)
-2. Click **"New token"**
-3. Name it (e.g., "deployment-token")
-4. Select **"Write"** permission
-5. Click **"Generate"** and copy the token
-
-##### Step 2: Create New Space
-
-1. Go to [Create New Space](https://huggingface.co/new-space?sdk=docker)
-2. Choose a **Space name** (e.g., "llm-code-deployment")
-3. Select **"Docker"** as SDK
-4. Choose visibility (Public/Private)
-5. Click **"Create Space"**
-
-##### Step 3: Configure Space Secrets
-
-1. Go to your Space settings: `https://huggingface.co/spaces/{username}/{spacename}/settings`
-2. Scroll down to **"Repository secrets"** section
-3. Add the following secrets one by one:
-   - `GITHUB_TOKEN`: Your GitHub Personal Access Token
-   - `GITHUB_USERNAME`: Your GitHub username
-   - `OPENAI_API_KEY`: Your Gemini API key
-   - `SECRET`: Your secret key for request verification
-   - `AIPIPE_AKI_KEY`: Your AI Pipe API key (fallback)
-
-![Space Secrets Configuration](.github/assets/space_secret.png)
-
-##### Step 4: Deploy Using Git
-
-Add Hugging Face remote and push:
+1. Generate a Hugging Face token: https://huggingface.co/settings/tokens (give "Write" permission)
+2. Create a new Space and choose SDK: Docker
+3. Add secrets in Space settings:
+   - `GITHUB_TOKEN`, `GITHUB_USERNAME`, `OPENAI_API_KEY`, `SECRET`, `AIPIPE_AKI_KEY`
+4. Push the repo to the Space remote:
 
 ```bash
 git remote add hf https://huggingface.co/spaces/{username}/{spacename}
@@ -243,97 +161,32 @@ git commit -m "Deploy to Hugging Face Spaces"
 git push hf main
 ```
 
-If you encounter authentication issues, use your token:
-
+If authentication fails, set the remote URL with token:
 ```bash
 git remote set-url hf https://{username}:{your_hf_token}@huggingface.co/spaces/{username}/{spacename}
 git push hf main
 ```
 
-#### Method 2: Using Hugging Face CLI
-
-##### Step 1: Install Hugging Face CLI
+Method 2 — Hugging Face CLI:
 
 ```bash
 pip install huggingface_hub
-```
-
-##### Step 2: Login
-
-```bash
 huggingface-cli login
-```
-
-Enter your Hugging Face token when prompted.
-
-##### Step 3: Upload to Space
-
-```bash
+huggingface-cli repo create {username}/{spacename} --type space --private
 huggingface-cli upload {username}/{spacename} . --repo-type=space
 ```
 
-#### Verify Deployment
+Verify deployment once the Space build completes (2–5 minutes). The API endpoints will be available under the Space URL.
 
-1. Go to `https://huggingface.co/spaces/{username}/{spacename}`
-2. Wait for the build to complete (usually 2-5 minutes)
-3. Once running, your API will be available at:
-   - `https://{username}-{spacename}.hf.space/api-endpoint`
-   - `https://{username}-{spacename}.hf.space/health`
+Note on Space configuration: the YAML frontmatter at the top of this README contains the configuration used for Spaces (sdk: docker, app_file: main.py). Keep that consistent with your repo.
 
-#### Space Configuration
+## API Endpoints
 
-The Space is configured via the YAML frontmatter in README.md:
-
-```yaml
----
-title: LLM Code Deployment System
-emoji: 🚀
-colorFrom: blue
-colorTo: green
-sdk: docker
-python_version: "3.13"
-app_file: main.py
-pinned: false
----
-```
-
-Key parameters:
-- **`sdk: docker`**: Uses the Dockerfile for deployment
-- **`python_version`**: Python version (informational)
-- **`app_file`**: Main application file
-- **`title`** and **`emoji`**: Display information
-
-For more configuration options, see [Hugging Face Spaces Config Reference](https://huggingface.co/docs/hub/spaces-config-reference).
-
-#### Troubleshooting Spaces Deployment
-
-**Build Fails:**
-- Check Docker logs in the Space's "Logs" tab
-- Verify all files are committed and pushed
-- Ensure requirements.txt is present and valid
-
-**App Not Starting:**
-- Check that port 5000 is exposed in Dockerfile
-- Verify environment secrets are set correctly
-- Review application logs in Space dashboard
-
-**Secrets Not Working:**
-- Ensure secret names match exactly (case-sensitive)
-- Restart the Space after adding secrets
-- Check that secrets are in the correct format
-
-**Git Push Fails:**
-- Verify you have write access to the Space
-- Check your token has "Write" permission
-- Try re-authenticating with `huggingface-cli login`
-
-### API Endpoints
-
-#### POST `/api-endpoint`
+### POST /api-endpoint
 
 Main endpoint for build and revise requests.
 
-**Request Format:**
+Request format (example):
 
 ```json
 {
@@ -359,7 +212,7 @@ Main endpoint for build and revise requests.
 }
 ```
 
-**Response:**
+Response (example):
 
 ```json
 {
@@ -371,19 +224,15 @@ Main endpoint for build and revise requests.
 }
 ```
 
-#### GET `/health`
+### GET /health
 
-Health check endpoint.
-
-**Response:**
+Health check endpoint. Example response:
 
 ```json
-{
-  "status": "healthy"
-}
+{ "status": "healthy" }
 ```
 
-### Testing with cURL
+## Testing with cURL
 
 ```bash
 curl http://localhost:5000/api-endpoint \
@@ -408,317 +257,137 @@ curl http://localhost:5000/api-endpoint \
 
 ### Core Components
 
-#### 1. Configuration Module (`utils/config.py`)
-- **Environment Management**: Loads and validates configuration from `.env`
-- **API Client Initialization**: 
-  - Primary: Gemini API via `get_openai_client()`
-  - Fallback: AI Pipe API via `get_fallback_client()`
-- **GitHub Client**: Authenticates and manages GitHub API access
-- **Config Validation**: Ensures all required credentials are present
+1. Configuration Module (`utils/config.py`)
+   - Loads and validates environment variables
+   - Initializes API clients (primary LLM, fallback client)
+   - Authenticates GitHub client
 
-#### 2. Request Handler (`main.py`)
-- **Flask API Endpoint**: `/api-endpoint` for processing requests
-- **Request Validation**: Uses `validate_request()` to verify required fields
-- **Secret Verification**: Authenticates requests using shared secret
-- **Step-by-Step Processing**: Orchestrates the entire workflow with error tracking
-- **Health Check**: `/health` endpoint for monitoring
+2. Request Handler (`main.py`)
+   - Flask API endpoints
+   - Request validation and secret verification
+   - Orchestrates the build/revise workflow
 
-#### 3. Validation Module (`utils/validation.py`)
-- **Request Validation**: Checks for required fields (email, secret, round, nonce, brief, evaluation_url)
-- **Type Checking**: Validates data types (round must be int ≥ 1, attachments must be list)
-- **Secret Verification**: Compares provided secret with configured secret
-- **Good-to-have Fields**: Warns about missing optional fields (task, checks)
+3. Validation Module (`utils/validation.py`)
+   - Ensures required fields and correct types
+   - Validates secret and optional fields
 
-#### 4. File Handler (`utils/file_handler.py`)
-- **Multi-Format Support**: Handles text, CSV, JSON, markdown, images, videos, audio, documents
-- **Smart Content Detection**: Sends full content (≤20,000 chars) or preview based on size
-- **Encoding Support**: Multiple encoding fallbacks (UTF-8, Latin-1, CP1252, ISO-8859-1, ASCII)
-- **Base64 Decoding**: Robust decoding with automatic padding correction
-- **Data URI Processing**: Extracts MIME types, decodes content, generates usage examples
-- **File Type Detection**: Identifies text files, images, videos, audio, documents
-- **Conversion Flags**: Marks files needing conversion (.md, .docx → HTML)
+4. File Handler (`utils/file_handler.py`)
+   - Supports text, CSV, JSON, images, audio, video, documents
+   - Decodes data URIs and base64 payloads robustly
+   - Detects and flags files needing conversion
 
-#### 5. Code Generator (`utils/code_generator.py`)
-- **LLM Integration**: 
-  - Primary: Gemini 2.5 Flash model
-  - Fallback: GPT-4 via AI Pipe (automatic failover)
-- **Attachment Processing**: Uses file_handler to process all attachment types
-- **Prompt Engineering**: Creates detailed prompts with brief, checks, and attachment info
-- **Round Support**: Handles both new generation and code updates
-- **Content Extraction**: Removes markdown code blocks from LLM responses
-- **README Generation**: Creates professional documentation using LLM
+5. Code Generator (`utils/code_generator.py`)
+   - Primary LLM: Gemini or OpenAI-compatible provider
+   - Fallback: AI Pipe (when configured)
+   - Generates application code and README content
 
-#### 6. GitHub Manager (`utils/github_manager.py`)
-- **Repository Operations**:
-  - Creates new repositories for round 1
-  - Updates existing repositories for round 2+
-  - Retrieves existing code from previous rounds
-- **File Management**:
-  - Creates/updates `index.html` with generated code
-  - Adds MIT LICENSE automatically
-  - Generates and updates README.md
-- **GitHub Pages Setup**:
-  - Enables Pages on main branch
-  - Configures deployment source
-  - Requests Pages build with retry logic
-  - Handles race conditions and API errors
-- **Error Handling**: Comprehensive retry logic for API failures
+6. GitHub Manager (`utils/github_manager.py`)
+   - Creates and updates repositories
+   - Adds LICENSE and README.md
+   - Uploads `index.html` or other generated files
+   - Configures GitHub Pages and triggers builds with retry logic
 
-#### 7. API Notifier (`utils/api_notifier.py`)
-- **Evaluation Notification**: POSTs results to evaluation URL
-- **Retry Logic**: Exponential backoff (1, 2, 4, 8, 16 seconds)
-- **Timeout Handling**: 30-second timeout per request
-- **Error Recovery**: Up to 5 retry attempts
-- **Status Reporting**: Logs all attempts and final status
+7. API Notifier (`utils/api_notifier.py`)
+   - Posts evaluation payloads to `evaluation_url`
+   - Implements exponential backoff and timeout handling
 
-### System Workflow
+### System Workflow (high-level)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Incoming POST Request                   │
-│                      /api-endpoint                          │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Request Validation & Authentication            │
-│  - Check required fields (email, secret, round, etc.)       │
-│  - Verify secret matches configured value                   │
-│  - Validate data types and constraints                      │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Process Attachments                        │
-│  - Load files from data URIs, URLs, or paths                │
-│  - Decode base64 with multi-encoding support                │
-│  - Extract metadata (MIME types, sizes, previews)           │
-│  - Format for LLM prompt (full content or preview)          │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│            Fetch Existing Code (Round 2+)                   │
-│  - Query GitHub for repository from previous round          │
-│  - Retrieve index.html content                              │
-│  - Include in prompt for code modification                  │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                Generate Code with LLM                       │
-│  Primary: Gemini 2.5 Flash                                  │
-│  ┌──────────────────────────────────────────┐               │
-│  │ Prompt includes:                         │               │
-│  │ - Brief and requirements                 │               │
-│  │ - Evaluation checks                      │               │
-│  │ - Attachment information                 │               │
-│  │ - Existing code (if round 2+)            │               │
-│  └──────────────────────────────────────────┘               │
-│         │                                                   │
-│         │ On Failure                                        │
-│         ▼                                                   │
-│  Fallback: GPT-4 via AI Pipe                                │
-│  ┌──────────────────────────────────────────┐               │
-│  │ Same prompt with alternative API         │              │
-│  └──────────────────────────────────────────┘               │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Create/Update GitHub Repository                │
-│  Round 1:                          Round 2+:                │
-│  - Create new repository           - Get existing repo      │
-│  - Add LICENSE file                - Update index.html      │
-│  - Create initial README           - Increment version      │
-│  Round-independent:                                         │
-│  - Upload/update index.html with generated code             │
-│  - Commit changes with descriptive message                  │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Enable GitHub Pages                        │
-│  - Check if Pages exists (GET /repos/{owner}/{repo}/pages)  │
-│  - Create Pages if not exists (POST)                        │
-│  - Update Pages config (PATCH)                              │
-│  - Request Pages build                                      │
-│  - Retry on failures with exponential backoff               │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Generate & Update README                  │
-│  - Create professional README using LLM                     │
-│  - Include project description, features, usage             │
-│  - Add repository and Pages URLs                            │
-│  - Update or create README.md in repository                 │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Fetch Latest Commit SHA                    │
-│  - Query repository for recent commits                      │
-│  - Extract SHA from latest commit                           │
-│  - Use for evaluation notification                          │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Notify Evaluation API                          │
-│  - POST to evaluation_url with:                             │
-│    * email, task, round, nonce                              │
-│    * repo_url, pages_url, commit_sha                        │
-│  - Retry up to 5 times with exponential backoff             │
-│  - Log success/failure status                               │
-└───────────────────────┬─────────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Return Success Response                    │
-│  {                                                          │
-│    "status": "success",                                     │
-│    "repo_url": "https://github.com/...",                    │
-│    "pages_url": "https://username.github.io/...",           │
-│    "commit_sha": "abc123..."                                │
-│  }                                                          │
-└─────────────────────────────────────────────────────────────┘
-```
+- Incoming POST → validate request & secret → process attachments → (if round >1) fetch existing code → generate or modify code via LLM → create/update GitHub repo → enable Pages → update README → notify evaluation API → return response.
 
-### Error Handling Strategy
+(See source files for implementation details.)
 
-- **Validation Errors**: Return HTTP 400 with specific error message
-- **API Failures**: Automatic failover from Gemini to AI Pipe
-- **GitHub Errors**: Retry logic with exponential backoff
-- **Pages Setup Issues**: Continue with file upload even if Pages config fails
-- **README Failures**: Log warning but continue with deployment
-- **Evaluation API Errors**: Retry multiple times, mark as warning if all fail
-- **Internal Errors**: Return HTTP 500 with error details and step information
+## Error Handling Strategy
+
+- Validation errors return HTTP 400 with a specific message.
+- Internal errors return HTTP 500 with step information for debugging.
+- API failures use automatic retry and fallback (LLM fallback, Pages build retries).
+- Evaluation API notifications retry with exponential backoff (1, 2, 4, 8, 16 seconds up to max attempts).
 
 ## Round 2 (Revise) Handling
 
-The system automatically handles Round 2 requests:
+When `round` is 2+:
 
-1. Detects `"round": 2` in the request
-2. Finds the existing repository from Round 1
-3. Generates updated code based on the new brief
-4. Updates files in the repository
-5. Regenerates README with new information
-6. Notifies evaluation API with updated commit SHA
+1. The system locates the existing repository for round 1.
+2. It includes prior code in the prompt for the LLM.
+3. Generates updated code and commits changes.
+4. Regenerates README and notifies evaluation API with the new commit SHA.
 
 ## Security Considerations
 
-- Secret verification prevents unauthorized access
-- No secrets stored in git history
-- Environment variables for sensitive data
-- `.env` file excluded from git (add to `.gitignore`)
-
-## Error Handling
-
-- Invalid requests return HTTP 400 with error details
-- Internal errors return HTTP 500 with error messages
-- Evaluation API failures trigger automatic retries
-- All errors are logged to console for debugging
+- Requests are verified using a shared `SECRET`.
+- Secrets are not stored in git history (use environment variables).
+- Add `.env` to `.gitignore` to avoid accidental commits.
 
 ## Dependencies
 
-Core libraries:
+Core libraries used in this project:
 
-- `flask`: Web framework for API endpoint
-- `openai`: LLM integration for code generation (supports Gemini and OpenAI-compatible APIs)
-- `pygithub`: GitHub API client for repository management
-- `requests`: HTTP client for evaluation API and GitHub Pages setup
-- `python-dotenv`: Environment variable management
-- `gunicorn`: Production WSGI server (Docker deployment)
+- flask — Web framework for API endpoint
+- openai — LLM integration (Gemini/OpenAI-compatible)
+- pygithub — GitHub API client
+- requests — HTTP client for evaluation API and Pages setup
+- python-dotenv — Environment variable management
+- gunicorn — Production WSGI server (for Docker/production)
+
+(See `pyproject.toml` or requirements for exact pinned versions.)
 
 ## Limitations & Future Improvements
 
-- Currently generates single-page HTML applications
-- GitHub Pages may take 1-2 minutes to deploy
-- Rate limits on OpenAI and GitHub APIs
-- Could add support for multi-file projects
-- Could implement caching for faster regeneration
+- Currently focused on single-page HTML applications.
+- GitHub Pages builds may take 1–2 minutes.
+- Rate limits apply for LLM and GitHub APIs.
+- Future: support multi-file projects, caching, more robust CI/CD integration.
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License — see LICENSE file for details.
 
 ## Troubleshooting
 
-### GitHub Token Issues
+- GitHub Token Issues:
+  - Ensure required scopes (`repo`, `workflow`, `admin:repo_hook`) are enabled.
+- LLM / OpenAI Issues:
+  - Verify your API key and account limits.
+- GitHub Pages Not Deploying:
+  - Wait 1–2 minutes and check repository → Settings → Pages.
+  - Ensure `index.html` is present in the main branch.
+- Port Already in Use:
+  - Change `PORT` in `.env` or kill the process using the port:
+    ```bash
+    lsof -ti:5000 | xargs kill -9
+    ```
 
-- Ensure all required scopes are enabled
-- Token must have `repo` access for public repositories
-- Verify token hasn't expired
+## Submission (for course / evaluation)
 
-### OpenAI API Issues
+When your API and repository are ready, submit the required information via the provided submission form:
 
-- Check API key is valid and has credits
-- Verify internet connectivity
-- Review rate limits on your OpenAI account
+Submission form: https://docs.google.com/forms/d/e/1FAIpQLScInfLkTCeVow9Z-4LL3TjM8NuTX90akPxryCwHhDjUm6laaw/viewform?pli=1
 
-### GitHub Pages Not Deploying
+You will be asked for:
+- Deployment API URL (e.g., `{deployed_link}/api-endpoint`)
+- The `SECRET` value your API expects
+- The GitHub repository URL (make repo public before the deadline)
 
-- Wait 1-2 minutes after creation
-- Check repository settings → Pages section
-- Ensure repository is public
-- Verify `index.html` exists in main branch
-
-### Port Already in Use
-
-- Change `PORT` in `.env` file
-- Or kill the process using: `lsof -ti:5000 | xargs kill -9`
-
-
-### Testing Your Deployment
-
-Test your deployed API
-```bash
-curl https://your-deployment-url.hf.space/health
-
-curl https://your-deployment-url.hf.space/api-endpoint \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "secret": "your_secret_here",
-    "task": "test-deployment",
-    "round": 1,
-    "nonce": "test-123",
-    "brief": "Create a simple test page",
-    "checks": [],
-    "evaluation_url": "https://httpbin.org/post"
-  }'
-```
+Before submitting, verify:
+- `/health` returns `{"status":"healthy"}`
+- `/api-endpoint` accepts POST requests with authentication
+- Repository visibility and environment variables are configured
 
 ## Evidence & Logging
 
-### Request/Response Tracking
-
-All API requests and responses are automatically logged to a dedicated evidence storage system for verification and audit purposes:
-
-**Evidence Dashboard**: [View Request/Response Logs](https://store-evidence.vercel.app/api/logs)
-
-
-Each log entry includes:
-- Complete request payload (email, task, round, brief, checks, attachments)
-- Response data (repo_url, pages_url, commit_sha, status)
-- Timestamp, client IP, and request URL
-- Success/error status and messages
-
-This logging is:
-- **Asynchronous** - Doesn't slow down request processing
-- **Non-intrusive** - Silent failures won't break the API
-- **Comprehensive** - Captures every request for audit trail
-- **Dispute-ready** - Evidence for evaluation disputes
+The project contains mechanisms to log requests and responses for auditing and evaluation purposes. Logs include request payloads, responses, timestamps, and status.
 
 ## Support
 
-For issues or questions:
+If you run into issues:
+1. Check the Troubleshooting section above
+2. Review console error messages and logs
+3. Verify environment variables and API tokens
+4. Reach out (open an issue on this repository) with clear reproduction steps
 
-1. Check the troubleshooting section above
-2. Review error messages in console output
-3. Verify all environment variables are set correctly
-4. Ensure GitHub and OpenAI credentials are valid
-5. Check the [evidence dashboard](https://store-evidence.vercel.app/api/logs) for logged requests#   T D S _ p 1 
- 
- 
+---
+
+If you'd like, I can:
+- Open a pull request that applies this corrected README.md,
+- Or directly push the change to a branch and create the PR for you. Tell me which you'd prefer.
