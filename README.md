@@ -377,7 +377,4 @@ If you run into issues:
 
 ---
 
-If you'd like, I can:
-- Open a pull request that applies this corrected README.md,
-- Or directly push the change to a branch and create the PR for you. Tell me which you'd prefer.
 
